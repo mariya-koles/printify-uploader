@@ -7,8 +7,7 @@ A React application for uploading and managing products on Printify, specificall
 - Upload images for canvas products
 - Automatic image optimization and resizing
 - Support for multiple canvas sizes (6x6" to 20x20")
-- Variant price management
-- Shipping method selection
+- Pre-configured variant pricing
 - Integration with Printify API
 
 ## Prerequisites
@@ -49,9 +48,8 @@ yarn dev
 1. Select your shop from the available options
 2. Upload your image (minimum 1000x1000px)
 3. Enter product details (title, description)
-4. Review and adjust variants and pricing
-5. Select shipping method
-6. Submit the product for creation
+4. Review the available canvas sizes
+5. Submit the product for creation
 
 ## Development
 
