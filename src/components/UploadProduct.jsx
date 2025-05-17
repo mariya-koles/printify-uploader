@@ -15,6 +15,8 @@ import ImageUploader from './ImageUploader';
 import ProductDetails from './ProductDetails';
 import ShippingSelector from './ShippingSelector';
 import VariantDisplay from './VariantDisplay';
+import ColorPicker from './ColorPicker';
+import { DEFAULT_CANVAS_DESCRIPTION } from '../data/productDescription';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -36,7 +38,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(DEFAULT_CANVAS_DESCRIPTION);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [blueprintDetails, setBlueprintDetails] = useState(null);
   const [printProviders, setPrintProviders] = useState([]);
@@ -45,6 +47,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
   const [selectedVariants, setSelectedVariants] = useState([]);
   const [shippingInfo, setShippingInfo] = useState(null);
   const [selectedShippingMethod, setSelectedShippingMethod] = useState('standard');
+  const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const toast = useToast();
 
   useEffect(() => {
@@ -418,33 +421,24 @@ const UploadProduct = ({ selectedShop, onBack }) => {
   };
 
   const handleUpload = async () => {
-    try {
-      setIsLoading(true);
-      
-      // Validate required fields
-      if (!selectedImage) {
-        throw new Error('Please select an image');
-      }
-      if (!title) {
-        throw new Error('Please enter a title');
-      }
-      if (!description) {
-        throw new Error('Please enter a description');
-      }
-      if (!selectedProvider || selectedVariants.length === 0) {
-        throw new Error('No variants selected');
-      }
-      if (!selectedShippingMethod) {
-        throw new Error('Please select a shipping method');
-      }
+    if (!selectedImage || !title || selectedVariants.length === 0) {
+      toast({
+        title: 'Missing required fields',
+        description: 'Please fill in all required fields',
+        status: 'error',
+        duration: 3000,
+      });
+      return;
+    }
 
-      // Upload image first
+    setIsLoading(true);
+    setUploadProgress(0);
+
+    try {
       const imageUploadResponse = await uploadImage();
       if (!imageUploadResponse) {
-        throw new Error('Failed to upload image');
+        throw new Error('Image upload failed');
       }
-
-      console.log('Image upload response:', imageUploadResponse);
 
       const productData = {
         title,
@@ -459,6 +453,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
           {
             position: 'front',
             variant_ids: selectedVariants.map(variant => variant.id),
+            background: backgroundColor,
             placeholders: [
               {
                 position: 'front',
@@ -475,7 +470,8 @@ const UploadProduct = ({ selectedShop, onBack }) => {
             ]
           }
         ],
-        shipping_from: selectedShippingMethod,
+        shipping_from: shippingInfo?.country || null,
+        shipping_method: selectedShippingMethod,
       };
 
       console.log('Sending product data:', productData);
@@ -511,7 +507,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
   };
 
   return (
-    <Container maxW="container.md" py={8}>
+    <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
         <Button onClick={onBack} alignSelf="flex-start">
           Back to Menu
@@ -566,6 +562,12 @@ const UploadProduct = ({ selectedShop, onBack }) => {
                   isLoading={isLoading}
                 />
               )}
+
+              <ColorPicker
+                selectedColor={backgroundColor}
+                onColorChange={setBackgroundColor}
+                selectedImage={selectedImage}
+              />
 
               <Button
                 colorScheme="green"
