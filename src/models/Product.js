@@ -10,11 +10,9 @@ class Product {
     print_provider_id,
     variants,
     print_areas,
-    shipping_from = null,
-    shipping_method = 'standard',
     print_details = {
       format: 'jpg',
-      print_on_side: 'regular'
+      print_on_side: 'off'
     }
   }) {
     this.title = title;
@@ -23,8 +21,6 @@ class Product {
     this.print_provider_id = print_provider_id;
     this.variants = this.formatVariants(variants);
     this.print_areas = this.formatPrintAreas(print_areas);
-    this.shipping_from = shipping_from;
-    this.shipping_method = shipping_method;
     this.print_details = print_details;
   }
 
@@ -120,8 +116,6 @@ class Product {
       print_provider_id: this.print_provider_id,
       variants: this.variants,
       print_areas: this.print_areas,
-      shipping_from: this.shipping_from,
-      shipping_method: this.shipping_method,
       print_details: this.print_details
     };
   }

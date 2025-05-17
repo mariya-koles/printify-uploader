@@ -57,7 +57,7 @@ app.post('/api/uploads/images', async (req, res) => {
       maxContentLength: Infinity,
       maxBodyLength: Infinity
     });
-    console.log('Image upload successful');
+    console.log('Image upload successful. Response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
     console.error('Error uploading image:', error.response?.data || error.message);
@@ -72,13 +72,16 @@ app.post('/api/shops/:shopId/products', async (req, res) => {
 
   try {
     console.log('Creating product in Printify...');
+    console.log('Request payload:', JSON.stringify(productData, null, 2));
+    
     const response = await axios.post(`https://api.printify.com/v1/shops/${shopId}/products.json`, productData, {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`,
         'Content-Type': 'application/json'
       }
     });
-    console.log('Product creation successful');
+    
+    console.log('Product creation successful. Full response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
     console.error('Error creating product:', error.response?.data || error.message);
@@ -261,27 +264,6 @@ app.get('/api/catalog/:blueprintId/print_providers/:providerId/variants', async 
   }
 });
 
-// Proxy endpoint for getting shipping information for a specific print provider
-app.get('/api/catalog/:blueprintId/print_providers/:providerId/shipping', async (req, res) => {
-  const { blueprintId, providerId } = req.params;
-  try {
-    console.log(`Fetching shipping info for blueprint ${blueprintId} and provider ${providerId}...`);
-    const response = await axios.get(
-      `https://api.printify.com/v1/catalog/blueprints/${blueprintId}/print_providers/${providerId}/shipping.json`,
-      {
-        headers: {
-          'Authorization': `Bearer ${API_TOKEN}`
-        }
-      }
-    );
-    console.log('Shipping response:', response.data);
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching shipping info:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Server error' });
-  }
-});
-
 // Proxy endpoint for getting products for a shop
 app.get('/api/shops/:shopId/products', async (req, res) => {
   const { shopId } = req.params;
@@ -296,6 +278,18 @@ app.get('/api/shops/:shopId/products', async (req, res) => {
     // Ensure we're sending a consistent data format
     const products = response.data.data || response.data || [];
     console.log('Found products:', products.length);
+    console.log('Products details:', JSON.stringify(products, null, 2));
+    
+    // Log a summary of each product
+    products.forEach((product, index) => {
+      console.log(`\nProduct ${index + 1}:`);
+      console.log(`- ID: ${product.id}`);
+      console.log(`- Title: ${product.title}`);
+      console.log(`- Variants: ${product.variants?.length || 0}`);
+      console.log(`- Status: ${product.visible ? 'Visible' : 'Hidden'}`);
+      console.log(`- Created: ${product.created_at}`);
+      console.log(`- Updated: ${product.updated_at}`);
+    });
     
     res.json({ data: products });
   } catch (error) {

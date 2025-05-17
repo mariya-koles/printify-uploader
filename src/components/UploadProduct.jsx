@@ -13,7 +13,6 @@ import axios from 'axios';
 
 import ImageUploader from './ImageUploader';
 import ProductDetails from './ProductDetails';
-import ShippingSelector from './ShippingSelector';
 import VariantDisplay from './VariantDisplay';
 import ColorPicker from './ColorPicker';
 import { DEFAULT_CANVAS_DESCRIPTION } from '../data/productDescription';
@@ -46,8 +45,6 @@ const UploadProduct = ({ selectedShop, onBack }) => {
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [providerVariants, setProviderVariants] = useState([]);
   const [selectedVariants, setSelectedVariants] = useState([]);
-  const [shippingInfo, setShippingInfo] = useState(null);
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState('standard');
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const toast = useToast();
 
@@ -193,7 +190,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
           );
 
           if (!isAborted) {
-            console.log('Image upload API response:', response.data);
+            console.log('Image upload API response:', JSON.stringify(response.data, null, 2));
             if (!response.data || !response.data.id) {
               throw new Error('Invalid image upload response');
             }
@@ -289,7 +286,6 @@ const UploadProduct = ({ selectedShop, onBack }) => {
       // Fetch variants and shipping info in parallel
       await Promise.all([
         fetchProviderVariants(blueprintId, provider.id),
-        fetchShippingInfo(blueprintId, provider.id)
       ]);
     } catch (error) {
       console.error('Error fetching print providers:', error);
@@ -312,7 +308,6 @@ const UploadProduct = ({ selectedShop, onBack }) => {
       setPrintProviders([]);
       setProviderVariants([]);
       setSelectedVariants([]);
-      setShippingInfo(null);
     }
   };
 
@@ -388,44 +383,6 @@ const UploadProduct = ({ selectedShop, onBack }) => {
     }
   };
 
-  const fetchShippingInfo = async (blueprintId, providerId) => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/catalog/${blueprintId}/print_providers/${providerId}/shipping`
-      );
-      const shipping = response.data.data || response.data || {};
-      
-      // Convert shipping info to match Printify's exact shipping methods
-      const formattedShipping = {
-        economy: {
-          first_item: shipping.economy?.first_item || 869, // $8.69 for economy
-          additional_items: shipping.economy?.additional_items || 0,
-          handling_time: shipping.economy?.handling_time || { from: 4, to: 8 }
-        },
-        standard: {
-          first_item: shipping.standard?.first_item || 1229, // $12.29 for standard
-          additional_items: shipping.standard?.additional_items || 0,
-          handling_time: shipping.standard?.handling_time || { from: 2, to: 5 }
-        }
-      };
-
-      // Set default shipping method to standard
-      if (!selectedShippingMethod || !formattedShipping[selectedShippingMethod]) {
-        setSelectedShippingMethod('standard');
-      }
-
-      setShippingInfo(formattedShipping);
-    } catch (error) {
-      console.error('Error fetching shipping info:', error);
-      toast({
-        title: 'Error fetching shipping info',
-        description: error.message || 'Failed to fetch shipping information',
-        status: 'error',
-        duration: 5000,
-      });
-    }
-  };
-
   const handleUpload = async () => {
     if (!selectedImage || !title || selectedVariants.length === 0) {
       toast({
@@ -476,19 +433,8 @@ const UploadProduct = ({ selectedShop, onBack }) => {
             ]
           }
         ],
-        shipping_from: shippingInfo?.country || null,
-        shipping_method: selectedShippingMethod,
-        print_details: {
-          format: 'jpg',
-          print_on_side: 'regular'
-        }
+                        print_details: {          format: 'jpg',          print_on_side: 'off'        }
       });
-
-      // Validate the product data
-      const validation = productData.validate();
-      if (!validation.isValid) {
-        throw new Error(`Invalid product data: ${validation.errors.join(', ')}`);
-      }
 
       console.log('Sending product data:', productData.toJSON());
 
@@ -496,6 +442,8 @@ const UploadProduct = ({ selectedShop, onBack }) => {
         `${API_BASE_URL}/shops/${selectedShop}/products`,
         productData.toJSON()
       );
+
+      console.log('Product creation response:', JSON.stringify(response.data, null, 2));
 
       toast({
         title: 'Success',
@@ -570,15 +518,6 @@ const UploadProduct = ({ selectedShop, onBack }) => {
                 />
               )}
 
-              {shippingInfo && Object.keys(shippingInfo).length > 0 && (
-                <ShippingSelector
-                  shippingInfo={shippingInfo}
-                  selectedShippingMethod={selectedShippingMethod}
-                  onShippingMethodChange={setSelectedShippingMethod}
-                  isLoading={isLoading}
-                />
-              )}
-
               <ColorPicker
                 selectedColor={backgroundColor}
                 onColorChange={setBackgroundColor}
@@ -594,8 +533,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
                   !title ||
                   !description ||
                   !selectedProvider ||
-                  selectedVariants.length === 0 ||
-                  !selectedShippingMethod
+                  selectedVariants.length === 0
                 }
                 size="lg"
               >

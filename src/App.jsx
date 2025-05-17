@@ -31,7 +31,6 @@ import axios from 'axios';
 import ShopSelector from './components/ShopSelector';
 import ImageUploader from './components/ImageUploader';
 import ProductDetails from './components/ProductDetails';
-import ShippingSelector from './components/ShippingSelector';
 import VariantDisplay from './components/VariantDisplay';
 import MainMenu from './components/MainMenu';
 import UploadProduct from './components/UploadProduct';
@@ -75,8 +74,6 @@ function App() {
   const [selectedProvider, setSelectedProvider] = useState(null);
   const [providerVariants, setProviderVariants] = useState([]);
   const [selectedVariants, setSelectedVariants] = useState([]);
-  const [shippingInfo, setShippingInfo] = useState(null);
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState('standard');
   const toast = useToast();
 
   useEffect(() => {
@@ -320,42 +317,6 @@ function App() {
     }
   };
 
-  // Function to fetch shipping information for a specific print provider
-  const fetchShippingInfo = async (blueprintId, providerId) => {
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/catalog/${blueprintId}/print_providers/${providerId}/shipping`
-      );
-      const shipping = response.data.data || response.data || {};
-      
-      // Convert shipping info to the expected format if needed
-      const formattedShipping = {
-        standard: {
-          first_item: shipping.standard?.first_item || 0,
-          additional_items: shipping.standard?.additional_items || 0,
-          handling_time: shipping.standard?.handling_time || 0
-        },
-        express: {
-          first_item: shipping.express?.first_item || 0,
-          additional_items: shipping.express?.additional_items || 0,
-          handling_time: shipping.express?.handling_time || 0
-        }
-      };
-
-      setShippingInfo(formattedShipping);
-      return formattedShipping;
-    } catch (error) {
-      console.error('Error fetching shipping info:', error);
-      toast({
-        title: 'Error fetching shipping information',
-        description: error.message || 'Failed to fetch shipping information',
-        status: 'error',
-        duration: 5000,
-      });
-      return null;
-    }
-  };
-
   // Function to fetch print providers for a blueprint
   const fetchPrintProviders = async (blueprintId) => {
     try {
@@ -369,13 +330,10 @@ function App() {
       if (jondoProvider) {
         setSelectedProvider(jondoProvider);
         
-        // Wait for both variant and shipping info to be fetched
-        const [variants, shipping] = await Promise.all([
-          fetchProviderVariants(blueprintId, jondoProvider.id),
-          fetchShippingInfo(blueprintId, jondoProvider.id)
-        ]);
+        // Wait for variants to be fetched
+        const variants = await fetchProviderVariants(blueprintId, jondoProvider.id);
         
-        if (!variants.length || !shipping) {
+        if (!variants.length) {
           throw new Error('Failed to load product details');
         }
       } else {
@@ -525,16 +483,6 @@ function App() {
       return;
     }
 
-    if (!selectedShippingMethod) {
-      toast({
-        title: 'Shipping method not selected',
-        description: 'Please select a shipping method',
-        status: 'error',
-        duration: 3000,
-      });
-      return;
-    }
-
     try {
       setIsLoading(true);
 
@@ -584,8 +532,7 @@ function App() {
               }
             ]
           }
-        ],
-        shipping_method: selectedShippingMethod
+        ]
       };
 
       console.log('Uploading product with data:', productData);
