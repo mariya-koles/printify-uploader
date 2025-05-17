@@ -17,6 +17,7 @@ import ShippingSelector from './ShippingSelector';
 import VariantDisplay from './VariantDisplay';
 import ColorPicker from './ColorPicker';
 import { DEFAULT_CANVAS_DESCRIPTION } from '../data/productDescription';
+import Product from '../models/Product';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -445,14 +446,14 @@ const UploadProduct = ({ selectedShop, onBack }) => {
         throw new Error('Image upload failed');
       }
 
-      const productData = {
+      const productData = new Product({
         title,
         description,
         blueprint_id: blueprintDetails.id,
         print_provider_id: selectedProvider.id,
         variants: selectedVariants.map(variant => ({
           id: variant.id,
-          price: variant.price,
+          price: variant.price
         })),
         print_areas: [
           {
@@ -476,14 +477,24 @@ const UploadProduct = ({ selectedShop, onBack }) => {
           }
         ],
         shipping_from: shippingInfo?.country || null,
-        shipping_method: selectedShippingMethod
-      };
+        shipping_method: selectedShippingMethod,
+        print_details: {
+          format: 'jpg',
+          print_on_side: 'regular'
+        }
+      });
 
-      console.log('Sending product data:', productData);
+      // Validate the product data
+      const validation = productData.validate();
+      if (!validation.isValid) {
+        throw new Error(`Invalid product data: ${validation.errors.join(', ')}`);
+      }
+
+      console.log('Sending product data:', productData.toJSON());
 
       const response = await axios.post(
         `${API_BASE_URL}/shops/${selectedShop}/products`,
-        productData
+        productData.toJSON()
       );
 
       toast({

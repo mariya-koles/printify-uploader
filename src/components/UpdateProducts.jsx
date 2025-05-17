@@ -31,7 +31,7 @@ const UpdateProducts = ({ selectedShop, onBack }) => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/products/${selectedShop}`);
+      const response = await axios.get(`${API_BASE_URL}/shops/${selectedShop}/products`);
       setProducts(response.data.data || []);
     } catch (error) {
       toast({

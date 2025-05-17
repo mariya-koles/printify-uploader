@@ -282,6 +282,28 @@ app.get('/api/catalog/:blueprintId/print_providers/:providerId/shipping', async 
   }
 });
 
+// Proxy endpoint for getting products for a shop
+app.get('/api/shops/:shopId/products', async (req, res) => {
+  const { shopId } = req.params;
+  try {
+    console.log(`Fetching products for shop ${shopId}...`);
+    const response = await axios.get(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_TOKEN}`
+      }
+    });
+    
+    // Ensure we're sending a consistent data format
+    const products = response.data.data || response.data || [];
+    console.log('Found products:', products.length);
+    
+    res.json({ data: products });
+  } catch (error) {
+    console.error('Error fetching products:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Server error' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Proxy server running at http://localhost:${port}`);
   console.log('Using API token from secrets file');
