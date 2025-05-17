@@ -31,10 +31,12 @@ npm install
 yarn install
 ```
 
-3. Create a `.env` file in the root directory and add your Printify API credentials:
+3. Create a file named `printify-secrets.properties` in `D:\secrets\` directory with your Printify API credentials:
+```properties
+apiKey=your_api_key_here
 ```
-VITE_PRINTIFY_API_KEY=your_api_key_here
-```
+
+Note: The application uses `properties-reader` to read the API key from `D:\secrets\printify-secrets.properties`. If you want to store the file in a different location, update the path in `server.js`.
 
 4. Start the development server:
 ```bash
