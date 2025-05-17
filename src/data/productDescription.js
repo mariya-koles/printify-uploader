@@ -1,6 +1,12 @@
 export const DEFAULT_CANVAS_DESCRIPTION = 
 
-`<p><strong>Canvas Info</strong></p>
+`<p>AI-Generated Design Disclaimer</p>
+<p>This product features designs created with the assistance of AI technology,guided and 
+customized by me to ensure a unique and high-quality result. While AI was used as a tool in the 
+creative process, every product is carefully reviewed, refined, and finalized by me to meet 
+the highest standards.</p>
+
+<p><strong>Canvas Info</strong></p>
 <p> With a variety of sizes available, our matte canvases are built with a patented, solid support face, guaranteeing durability and preventing sagging or stretching over time. The corners and edges of our canvases are perfectly folded, creating a seamless and polished appearance that adds elegance to your space.</p>
 
 <p>🐾 Materials: cotton and polyester composite (canvas), pine wood (frame)</p>
