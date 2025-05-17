@@ -26,12 +26,12 @@ const MIN_IMAGE_SIZE = 1000;
 
 // Define the desired variant sizes and their prices
 const DESIRED_VARIANTS = {
-  '6" x 6"': 2000,
-  '10" x 10"': 2500,
-  '12" x 12"': 3000,
-  '14" x 14"': 3500,
-  '16" x 16"': 4000,
-  '20" x 20"': 5000
+  '6" x 6"': 3527,    // USD 35.27
+  '10" x 10"': 5655,  // USD 56.55
+  '12" x 12"': 6936,  // USD 69.36
+  '14" x 14"': 6999,  // USD 69.99
+  '16" x 16"': 8682,  // USD 86.82
+  '20" x 20"': 9999   // USD 99.99
 };
 
 const UploadProduct = ({ selectedShop, onBack }) => {
@@ -394,19 +394,24 @@ const UploadProduct = ({ selectedShop, onBack }) => {
       );
       const shipping = response.data.data || response.data || {};
       
-      // Convert shipping info to the expected format if needed
+      // Convert shipping info to match Printify's exact shipping methods
       const formattedShipping = {
-        standard: {
-          first_item: shipping.standard?.first_item || 0,
-          additional_items: shipping.standard?.additional_items || 0,
-          handling_time: shipping.standard?.handling_time || 0
+        economy: {
+          first_item: shipping.economy?.first_item || 869, // $8.69 for economy
+          additional_items: shipping.economy?.additional_items || 0,
+          handling_time: shipping.economy?.handling_time || { from: 4, to: 8 }
         },
-        express: {
-          first_item: shipping.express?.first_item || 0,
-          additional_items: shipping.express?.additional_items || 0,
-          handling_time: shipping.express?.handling_time || 0
+        standard: {
+          first_item: shipping.standard?.first_item || 1229, // $12.29 for standard
+          additional_items: shipping.standard?.additional_items || 0,
+          handling_time: shipping.standard?.handling_time || { from: 2, to: 5 }
         }
       };
+
+      // Set default shipping method to standard
+      if (!selectedShippingMethod || !formattedShipping[selectedShippingMethod]) {
+        setSelectedShippingMethod('standard');
+      }
 
       setShippingInfo(formattedShipping);
     } catch (error) {
@@ -471,7 +476,7 @@ const UploadProduct = ({ selectedShop, onBack }) => {
           }
         ],
         shipping_from: shippingInfo?.country || null,
-        shipping_method: selectedShippingMethod,
+        shipping_method: selectedShippingMethod
       };
 
       console.log('Sending product data:', productData);

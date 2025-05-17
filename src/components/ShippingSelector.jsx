@@ -46,11 +46,11 @@ const ShippingSelector = React.memo(({
                       {info.additional_items > 0 && 
                         ` + $${(info.additional_items / 100).toFixed(2)} per additional item`}
                     </Text>
-                    {info.handling_time && (
-                      <Text fontSize="sm" color="gray.500">
-                        Handling time: {info.handling_time} days
-                      </Text>
-                    )}
+                    <Text fontSize="sm" color="gray.500">
+                      {info.handling_time?.from && info.handling_time?.to
+                        ? `${info.handling_time.from}-${info.handling_time.to} business days`
+                        : `Handling time: ${info.handling_time} days`}
+                    </Text>
                   </Stack>
                 </Radio>
               </Box>
