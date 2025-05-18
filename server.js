@@ -25,20 +25,17 @@ const DESIRED_SIZES = ['6x6', '10x10', '12x12', '14x14', '16x16', '20x20'];
 // Proxy endpoint for getting shops
 app.get('/api/shops', async (req, res) => {
   try {
-    console.log('Fetching shops from Printify...');
     const response = await axios.get('https://api.printify.com/v1/shops.json', {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`
       }
     });
     
-    console.log('Shops response:', response.data);
     // Ensure we're sending back the correct data structure
     const shops = response.data;
     res.json({ data: Array.isArray(shops) ? shops : [] });
   } catch (error) {
-    console.error('Error fetching shops. Status:', error.response?.status);
-    console.error('Error details:', error.response?.data);
+    console.error('Error fetching shops:', error.response?.data || error.message);
     res.status(error.response?.status || 500).json(error.response?.data || { message: 'Server error' });
   }
 });
@@ -48,7 +45,6 @@ app.post('/api/uploads/images', async (req, res) => {
   const imageData = req.body;
 
   try {
-    console.log('Uploading image to Printify...');
     const response = await axios.post('https://api.printify.com/v1/uploads/images.json', imageData, {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`,
@@ -57,7 +53,6 @@ app.post('/api/uploads/images', async (req, res) => {
       maxContentLength: Infinity,
       maxBodyLength: Infinity
     });
-    console.log('Image upload successful. Response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
     console.error('Error uploading image:', error.response?.data || error.message);
@@ -71,9 +66,6 @@ app.post('/api/shops/:shopId/products', async (req, res) => {
   const productData = req.body;
 
   try {
-    console.log('Creating product in Printify...');
-    console.log('Request payload:', JSON.stringify(productData, null, 2));
-    
     const response = await axios.post(`https://api.printify.com/v1/shops/${shopId}/products.json`, productData, {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`,
@@ -81,7 +73,6 @@ app.post('/api/shops/:shopId/products', async (req, res) => {
       }
     });
     
-    console.log('Product creation successful. Full response:', JSON.stringify(response.data, null, 2));
     res.json(response.data);
   } catch (error) {
     console.error('Error creating product:', error.response?.data || error.message);
@@ -92,7 +83,6 @@ app.post('/api/shops/:shopId/products', async (req, res) => {
 // Proxy endpoint for getting catalog
 app.get('/api/catalog', async (req, res) => {
   try {
-    console.log('Fetching catalog from Printify...');
     const response = await axios.get('https://api.printify.com/v1/catalog/blueprints.json', {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`
@@ -101,11 +91,6 @@ app.get('/api/catalog', async (req, res) => {
     
     // Ensure we're sending a consistent data format
     const blueprints = response.data.data || response.data || [];
-    console.log('Found blueprints:', blueprints.length);
-    
-    // Log the titles to help with debugging
-    console.log('Blueprint titles:', blueprints.map(b => b.title));
-    
     res.json({ data: blueprints });
   } catch (error) {
     console.error('Error fetching catalog:', error.response?.data || error.message);
@@ -117,16 +102,10 @@ app.get('/api/catalog', async (req, res) => {
 app.get('/api/catalog/:blueprintId', async (req, res) => {
   const { blueprintId } = req.params;
   try {
-    console.log(`Fetching blueprint ${blueprintId} details...`);
     const response = await axios.get(`https://api.printify.com/v1/catalog/blueprints/${blueprintId}.json`, {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`
       }
-    });
-    console.log('Blueprint response structure:', {
-      hasData: !!response.data,
-      isArray: Array.isArray(response.data),
-      hasDataProperty: !!response.data.data
     });
     res.json(response.data);
   } catch (error) {
@@ -139,7 +118,6 @@ app.get('/api/catalog/:blueprintId', async (req, res) => {
 app.get('/api/catalog/:blueprintId/print_providers', async (req, res) => {
   const { blueprintId } = req.params;
   try {
-    console.log(`Fetching print providers for blueprint ${blueprintId}...`);
     const response = await axios.get(`https://api.printify.com/v1/catalog/blueprints/${blueprintId}/print_providers.json`, {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`
@@ -154,11 +132,6 @@ app.get('/api/catalog/:blueprintId/print_providers', async (req, res) => {
       providers = response.data;
     }
 
-    console.log('Available providers:', providers.map(p => ({
-      id: p.id,
-      title: p.title
-    })));
-    
     // Try different ways to find Jondo provider
     const jondoProvider = providers.find(p => 
       p.title?.toLowerCase().includes('jondo') || 
@@ -167,18 +140,11 @@ app.get('/api/catalog/:blueprintId/print_providers', async (req, res) => {
     );
 
     if (!jondoProvider) {
-      console.log('No Jondo provider found among available providers');
-      // Instead of sending empty array, send error to trigger proper error handling
       return res.status(404).json({
         message: 'Jondo provider not found',
         available_providers: providers.map(p => p.title)
       });
     }
-
-    console.log('Found Jondo provider:', {
-      id: jondoProvider.id,
-      title: jondoProvider.title
-    });
     
     res.json({ data: [jondoProvider] });
   } catch (error) {
@@ -194,7 +160,6 @@ app.get('/api/catalog/:blueprintId/print_providers', async (req, res) => {
 app.get('/api/catalog/:blueprintId/print_providers/:providerId/variants', async (req, res) => {
   const { blueprintId, providerId } = req.params;
   try {
-    console.log(`Fetching variants for blueprint ${blueprintId} and provider ${providerId}...`);
     const response = await axios.get(
       `https://api.printify.com/v1/catalog/blueprints/${blueprintId}/print_providers/${providerId}/variants.json`,
       {
@@ -203,9 +168,6 @@ app.get('/api/catalog/:blueprintId/print_providers/:providerId/variants', async 
         }
       }
     );
-
-    // Log the raw response for debugging
-    console.log('Raw variants response:', JSON.stringify(response.data, null, 2));
 
     // Handle different response structures
     let variants = {};
@@ -217,29 +179,13 @@ app.get('/api/catalog/:blueprintId/print_providers/:providerId/variants', async 
       variants = response.data;
     }
 
-    // Log the extracted variants
-    console.log('Extracted variants:', {
-      count: Object.keys(variants).length,
-      sampleTitles: Object.values(variants)
-        .slice(0, 3)
-        .map(v => v?.title || 'No title')
-    });
-
     // Validate variant structure
     const validVariants = Object.entries(variants).reduce((acc, [key, variant]) => {
       if (variant && variant.title && variant.id) {
         acc[key] = variant;
-      } else {
-        console.log('Skipping invalid variant:', variant);
       }
       return acc;
     }, {});
-
-    // Log validation results
-    console.log('Validation results:', {
-      originalCount: Object.keys(variants).length,
-      validCount: Object.keys(validVariants).length
-    });
 
     if (Object.keys(validVariants).length === 0) {
       return res.status(404).json({
@@ -267,34 +213,54 @@ app.get('/api/catalog/:blueprintId/print_providers/:providerId/variants', async 
 // Proxy endpoint for getting products for a shop
 app.get('/api/shops/:shopId/products', async (req, res) => {
   const { shopId } = req.params;
+  const { page = 1, limit = 50 } = req.query;
+  
   try {
-    console.log(`Fetching products for shop ${shopId}...`);
     const response = await axios.get(`https://api.printify.com/v1/shops/${shopId}/products.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_TOKEN}`
+      },
+      params: {
+        page,
+        limit
+      }
+    });
+    
+    // Ensure we're sending a consistent data format with pagination info
+    const products = response.data.data || response.data || [];
+    res.json({
+      data: products,
+      total: response.data.total || products.length,
+      current_page: parseInt(page),
+      last_page: response.data.last_page || 1
+    });
+  } catch (error) {
+    console.error('Error fetching products:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Server error' });
+  }
+});
+
+// Proxy endpoint for getting all print providers
+app.get('/api/print-providers', async (req, res) => {
+  try {
+    const response = await axios.get('https://api.printify.com/v1/catalog/print_providers.json', {
       headers: {
         'Authorization': `Bearer ${API_TOKEN}`
       }
     });
     
-    // Ensure we're sending a consistent data format
-    const products = response.data.data || response.data || [];
-    console.log('Found products:', products.length);
-    console.log('Products details:', JSON.stringify(products, null, 2));
+    // Get all providers and filter for just Jondo and Sensaria
+    const allProviders = response.data.data || response.data || [];
+    const filteredProviders = allProviders.filter(provider => 
+      provider.title === 'Jondo' || provider.title === 'Sensaria'
+    );
     
-    // Log a summary of each product
-    products.forEach((product, index) => {
-      console.log(`\nProduct ${index + 1}:`);
-      console.log(`- ID: ${product.id}`);
-      console.log(`- Title: ${product.title}`);
-      console.log(`- Variants: ${product.variants?.length || 0}`);
-      console.log(`- Status: ${product.visible ? 'Visible' : 'Hidden'}`);
-      console.log(`- Created: ${product.created_at}`);
-      console.log(`- Updated: ${product.updated_at}`);
-    });
-    
-    res.json({ data: products });
+    res.json(filteredProviders);
   } catch (error) {
-    console.error('Error fetching products:', error.response?.data || error.message);
-    res.status(error.response?.status || 500).json(error.response?.data || { message: 'Server error' });
+    console.error('Error fetching print providers:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      message: error.response?.data?.message || 'Failed to fetch print providers'
+    });
   }
 });
 
