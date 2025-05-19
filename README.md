@@ -60,6 +60,3 @@ This project uses:
 - Chakra UI for components
 - Axios for API requests
 
-## License
-
-MIT 
